@@ -3,58 +3,38 @@ package Task1;
 import java.sql.*;
 
 public class DataBase {
-    private Connection connection;
-    private Statement statement;
+    private static Connection connection;
+    private static Statement statement;
 
 
     public DataBase(){
 
-//        try {
-////            init();
-////            System.out.println("init 1");
-////        } catch (ClassNotFoundException e) {
-////            e.printStackTrace();
-////        } catch (SQLException e) {
-////            System.out.println("Error! DataBase is not connected.");
-////            e.printStackTrace();
-////        }
-////        finally {
-////            try {
-////                disconnect();
-////            } catch (SQLException e) {
-////                e.printStackTrace();
-////            }
-////        }
-        System.out.println("Data Base is connected");
-//        try {
-//            init();
-//            System.out.println("init 2");
-//    } catch (ClassNotFoundException e) {
-//        e.printStackTrace();
-//    } catch (SQLException e) {
-//        e.printStackTrace();
-//    }
+        System.out.println("Data Base object is created");
+//
     }
 
 
-    private void init() throws ClassNotFoundException, SQLException {
+    public static void connect() throws ClassNotFoundException, SQLException {
         Class.forName("org.sqlite.JDBC");
         connection=DriverManager.getConnection("jdbc:sqlite:main.db");
         statement=connection.createStatement();
 
     }
 
-    private void disconnect() throws SQLException {
+    public static void disconnect() throws SQLException {
         connection.close();
     }
 
-    public void createTable() throws SQLException {
+    public void createTable(){
 
         try {
-            init();
+            connect();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
         try {
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS 'goods' (" +
                     "'id' INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
@@ -70,21 +50,53 @@ public class DataBase {
 
     }
 
-    public void deleteAllFromTable(String a) throws SQLException {
-        statement.execute("DELETE * FROM "+a);
+    public void deleteAllFromTable(String a) {
+        try {
+            statement.execute("DELETE FROM '"+a+"'");
+            statement.execute("DELETE FROM sqlite_sequence WHERE name='goods'"); //id сбрасываем на 1!
+        } catch (SQLException e) {
+            System.out.println("Такой таблицы не существует или ёё нельзя очистить");
+            e.printStackTrace();
+
+        }
 
     }
 
-    public void printFromDB() throws SQLException {
-        statement.execute("SELECT * FROM Goods");
-        ResultSet resultSet=statement.getResultSet();
-        System.out.println(resultSet);
+    public void printFromDB(){
+        try {
+            ResultSet resultSet=statement.executeQuery("SELECT * FROM 'goods'");
+            System.out.println("taking data from goods...");
+            while (resultSet.next()){
+                String name=resultSet.getString(1);
+                String name1=resultSet.getString(2);
+                String name2=resultSet.getString(3);
+                System.out.println(name+ " " +name1+ " "+ name2);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
 
     }
 
-    public void addToDB() throws SQLException {
-        statement.execute("INSERT INTO Goods(prodid, title, coast) VALUES(1010,'radiator',1000");
+    public void addToDB(){  //Самый простой и долгий вариант
 
+        long start= System.currentTimeMillis();
+        try {
+
+            for(int i=1;i<=10;i++){
+                statement.execute("INSERT INTO goods(prodid, title, coast) VALUES("+i+",'товар"+i+"',"+i+")");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        long finish = System.currentTimeMillis();
+        System.out.println("===================");
+        long time=finish-start;
+        System.out.println("Время выполнения: "+time );
     }
 
 
